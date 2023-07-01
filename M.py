@@ -28,7 +28,7 @@ except ImportError:
     install('speedtest-cli')
     import speedtest
 
-TOKEN = 'YOUR_BOT_TOKEN_HERE'
+TOKEN = '6150964288:AAGJOF9HCaUBYmATYoNokDi4BHaKEQAS9UA'
 bot = telebot.TeleBot(TOKEN)
 
 headers = {
