@@ -1,57 +1,61 @@
-import cloudscraper,secrets,os
-from bs4 import BeautifulSoup as bu
-from time import sleep
-from threading import Thread
-from uuid import uuid4
-class Muad():
-    def getit(self):
-        response = self.scraper.get(f"https://usr.gg/market?keyword=&sort=instagram&type={self.lenth}&starting_price=&last_price=")
-        if response.status_code == 200:
-            soup = bu(response.text, 'html.parser')
-            for link in soup.find_all('a'):
-                    url= link.get('href')
-                    if url.__contains__("/account/"):
-                        if url not in self.Urls:
-                                response2 = self.scraper.get(url)
-                                if response2.status_code== 200:
-                                    self.ok+=1
-                                    user1 = response2.text.split("<h1>@")[1]
-                                    user = user1.split("</h1>")[0]
-                                    if user not in self.Users:
-                                        self.Users.append(user)
-                                        open("users.txt","a").write(user+"\n")
-                                elif response2.status_code == 429:
-                                     self.rate+=1
-                                else:
-                                    self.error+=1
-        elif response.status_code== 429:
-             self.rate+=1
-        else:
-             self.error+=1
-    def counter(self):
-         while 1:
-              os.system(f"title Ok : [{self.ok}] - RL : [{self.rate}] - Error : [{self.error}]")
-    def __init__(self):
-        self.ok= 0
-        self.rate = 0
-        self.error = 0
-        self.Users = []
-        self.lenth = ""
-        self.userslist = open("users.txt","a")
-        self.scraper = cloudscraper.create_scraper()
-        self.Urls = []
-        mode =input("[1] 1L\n[2] 2L \n[3] 3L\n[4] 4L \n[5] All\n=>")
-        if mode.__contains__("1"):
-             self.lenth ="1"
-        elif mode.__contains__("2"):
-             self.lenth = "2"
-        elif mode.__contains__("3"):
-             self.lenth = "3"
-        elif mode.__contains__("4"):
-             self.lenth ="4"
-        elif mode.__contains__("5"):
-             self.lenth = "all"
-        Thread(None,self.counter).start()
-        while 1:
-             self.getit()
-Muad()
+import subprocess
+import sys
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+try:
+    import telebot
+except ImportError:
+    install('telebot')
+    import telebot
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    install('beautifulsoup4')
+    from bs4 import BeautifulSoup
+
+try:
+    import requests
+except ImportError:
+    install('requests')
+    import requests
+
+TOKEN = 'YOUR_BOT_TOKEN_HERE'
+bot = telebot.TeleBot(TOKEN)
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0;Win64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9'
+}
+
+with open('pr.txt', 'r') as f:
+    proxies_list = [line.strip() for line in f]
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.send_message(message.chat.id, "مرحبًا! أرسل لي رابط الموقع الذي تريد استخراج النص منه.")
+
+@bot.message_handler(func=lambda message: True)
+def get_text(message):
+    url = message.text
+    proxy = random.choice(proxies_list)
+    proxies = {
+        'http': proxy,
+        'https': proxy,
+    }
+    for i in range(3):
+        try:
+            response = requests.get(url, headers=headers, proxies=proxies)
+            response.raise_for_status()
+            break
+        except requests.exceptions.RequestException as e:
+            print(f'Error: {e}')
+            continue
+    response.encoding = 'utf-8'
+    soup = BeautifulSoup(response.text, 'html.parser')
+    text = soup.get_text()
+    bot.send_message(message.chat.id, text)
+
+bot.polling()
