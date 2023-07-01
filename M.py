@@ -22,7 +22,7 @@ except ImportError:
     install('requests')
     import requests
 
-TOKEN = 'YOUR_BOT_TOKEN_HERE'
+TOKEN = '6150964288:AAGJOF9HCaUBYmATYoNokDi4BHaKEQAS9UA'
 bot = telebot.TeleBot(TOKEN)
 
 headers = {
