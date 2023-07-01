@@ -28,7 +28,7 @@ except ImportError:
     install('speedtest-cli')
     import speedtest
 
-TOKEN = '6150964288:AAGJOF9HCaUBYmATYoNokDi4BHaKEQAS9UA'
+TOKEN = 'YOUR_BOT_TOKEN_HERE'
 bot = telebot.TeleBot(TOKEN)
 
 headers = {
@@ -42,6 +42,9 @@ def test_speed():
     download_speed = st.download() / 1_000_000
     upload_speed = st.upload() / 1_000_000
     return download_speed, upload_speed
+
+def split_text(text, max_length=4096):
+    return [text[i:i+max_length] for i in range(0, len(text), max_length)]
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -62,6 +65,8 @@ def get_text(message):
     soup = BeautifulSoup(response.text, 'html.parser')
     text = soup.get_text()
     download_speed, upload_speed = test_speed()
-    bot.send_message(message.chat.id, f'Download speed: {download_speed:.2f} Mbps\nUpload speed: {upload_speed:.2f} Mbps\n{text}')
+    bot.send_message(message.chat.id, f'Download speed: {download_speed:.2f} Mbps\nUpload speed: {upload_speed:.2f} Mbps')
+    for part in split_text(text):
+        bot.send_message(message.chat.id, part)
 
 bot.polling()
