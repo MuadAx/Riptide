@@ -1,4 +1,3 @@
-import random
 import subprocess
 import sys
 
@@ -23,6 +22,12 @@ except ImportError:
     install('requests')
     import requests
 
+try:
+    import speedtest
+except ImportError:
+    install('speedtest-cli')
+    import speedtest
+
 TOKEN = '6150964288:AAGJOF9HCaUBYmATYoNokDi4BHaKEQAS9UA'
 bot = telebot.TeleBot(TOKEN)
 
@@ -31,8 +36,12 @@ headers = {
     'Accept-Language': 'en-US,en;q=0.9'
 }
 
-with open('pr.txt', 'r') as f:
-    proxies_list = [line.strip() for line in f]
+def test_speed():
+    st = speedtest.Speedtest()
+    st.get_best_server()
+    download_speed = st.download() / 1_000_000
+    upload_speed = st.upload() / 1_000_000
+    return download_speed, upload_speed
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -41,14 +50,9 @@ def start(message):
 @bot.message_handler(func=lambda message: True)
 def get_text(message):
     url = message.text
-    proxy = random.choice(proxies_list)
-    proxies = {
-        'http': proxy,
-        'https': proxy,
-    }
     for i in range(3):
         try:
-            response = requests.get(url, headers=headers, proxies=proxies)
+            response = requests.get(url, headers=headers)
             response.raise_for_status()
             break
         except requests.exceptions.RequestException as e:
@@ -57,6 +61,7 @@ def get_text(message):
     response.encoding = 'utf-8'
     soup = BeautifulSoup(response.text, 'html.parser')
     text = soup.get_text()
-    bot.send_message(message.chat.id, text)
+    download_speed, upload_speed = test_speed()
+    bot.send_message(message.chat.id, f'Download speed: {download_speed:.2f} Mbps\nUpload speed: {upload_speed:.2f} Mbps\n{text}')
 
 bot.polling()
