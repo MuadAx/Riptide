@@ -1,13 +1,4 @@
-import subprocess
-import sys
 
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-install('transformers')
-install('bingpython')
-install('EdgeGpt')
-install('GoogleBard')
 import telebot
 from transformers import pipeline
 from EdgeGpt import EdgeGpt
