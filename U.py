@@ -11,7 +11,7 @@ import telebot
 from EdgeGpt import EdgeGpt
 from bingpython import BingGPT
 
-API_TOKEN = '<your_token_here>'
+API_TOKEN = '6150964288:AAGJOF9HCaUBYmATYoNokDi4BHaKEQAS9UA'
 
 bot = telebot.TeleBot(API_TOKEN)
 
