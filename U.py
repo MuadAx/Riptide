@@ -103,12 +103,13 @@ def fetch(url, seat_number):
 def start(message):
     global count_message
     bot.send_message(message.chat.id, "مرحبًا! أرسل لي رابط الموقع الذي تريد استخراج النص منه.")
-    count_message = bot.edit_message_text(f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}\nالطلبات في الثانية: {requests_per_second:.2f}", count_message.chat.id, count_message.message_id)
+    count_message = bot.send_message(message.chat.id, f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}")
+
 @bot.message_handler(func=lambda message: True)
 def get_text(message):
     url = message.text
     
-    msg = bot.send_message(message.chat.id, "ما هو رقم جلوسك؟")
+    msg = bot.edit_message(message.chat.id, "ما هو رقم جلوسك؟")
     bot.register_next_step_handler(msg, process_seat_number_step, url)
 
 def process_seat_number_step(message, url):
