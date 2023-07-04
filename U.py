@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import telebot
 
-bot_token = "YOUR_BOT_TOKEN"
+bot_token = "6150964288:AAGJOF9HCaUBYmATYoNokDi4BHaKEQAS9UA"
 bot = telebot.TeleBot(bot_token)
 
 user_data = {}
