@@ -67,25 +67,16 @@ def start(message):
 @bot.message_handler(func=lambda message: True)
 def get_text(message):
     url = message.text
+    
+    msg = bot.send_message(message.chat.id, "كم مرة تريد فتح الموقع؟")
+    bot.register_next_step_handler(msg, process_num_times_step, url)
+
+def process_num_times_step(message, url):
+    num_times = int(message.text)
+    
     with ThreadPoolExecutor() as executor:
-        future = executor.submit(fetch, url)
-        response_text = future.result()
-    response_text.encoding = 'utf-8'
-    soup = BeautifulSoup(response_text, 'html.parser')
-    
-    seat_number_input = soup.find('input', {'name': 'seat_number'})
-    
-    if seat_number_input:
-        msg = bot.send_message(message.chat.id, "ما هو رقم جلوسك؟")
-        bot.register_next_step_handler(msg, process_seat_number_step)
-    
-def process_seat_number_step(message):
-    seat_number = message.text
-    
-    inputs = soup.find_all('input')
-    
-    for input_element in inputs:
-        if input_element.get('name') == 'seat_number':
-            input_element['value'] = seat_number
+        futures = [executor.submit(fetch, url) for _ in range(num_times)]
+        for future in futures:
+            response_text = future.result()
     
 bot.polling()
