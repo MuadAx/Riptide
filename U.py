@@ -34,29 +34,35 @@ headers = {
 }
 
 request_count = 0
+success_count = 0
+fail_count = 0
 count_message = None
 
+session = requests.Session()
+
 def fetch(url):
-    global request_count, count_message
+    global request_count, success_count, fail_count, count_message
     for i in range(3):
         try:
-            response = requests.get(url, headers=headers)
+            response = session.get(url, headers=headers)
             response.raise_for_status()
             request_count += 1
+            success_count += 1
             if count_message:
-                bot.edit_message_text(f"عدد الطلبات: {request_count}", count_message.chat.id, count_message.message_id)
+                bot.edit_message_text(f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}", count_message.chat.id, count_message.message_id)
             if request_count >= 40:
                 bot.send_message(count_message.chat.id, "معاذ الموقع عليه ضغط")
             return response.text
         except requests.exceptions.RequestException as e:
             print(f'Error: {e}')
+            fail_count += 1
             continue
 
 @bot.message_handler(commands=['start'])
 def start(message):
     global count_message
     bot.send_message(message.chat.id, "مرحبًا! أرسل لي رابط الموقع الذي تريد استخراج النص منه.")
-    count_message = bot.send_message(message.chat.id, f"عدد الطلبات: {request_count}")
+    count_message = bot.send_message(message.chat.id, f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}")
 
 @bot.message_handler(func=lambda message: True)
 def get_text(message):
