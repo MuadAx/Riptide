@@ -72,17 +72,20 @@ def get_text(message):
         response_text = future.result()
     response_text.encoding = 'utf-8'
     soup = BeautifulSoup(response_text, 'html.parser')
-    text = soup.get_text()
-    bot.send_message(message.chat.id, text)
-    bot.send_message(message.chat.id, "Muad Ax everything done")
+    
+    seat_number_input = soup.find('input', {'name': 'seat_number'})
+    
+    if seat_number_input:
+        msg = bot.send_message(message.chat.id, "ما هو رقم جلوسك؟")
+        bot.register_next_step_handler(msg, process_seat_number_step)
+    
+def process_seat_number_step(message):
+    seat_number = message.text
     
     inputs = soup.find_all('input')
-    for input_element in inputs:
-        if input_element.get('type') == 'text':
-            random_number = ''.join([str(random.randint(0,9)) for _ in range(5)])
-            input_element['value'] = random_number
     
-    new_url = soup.find('form').get('action')
-    bot.send_message(message.chat.id, new_url)
-
+    for input_element in inputs:
+        if input_element.get('name') == 'seat_number':
+            input_element['value'] = seat_number
+    
 bot.polling()
