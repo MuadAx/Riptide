@@ -109,7 +109,7 @@ def start(message):
 def get_text(message):
     url = message.text
     
-    msg = bot.edit_message(message.chat.id, "ما هو رقم جلوسك؟")
+    msg = bot.send_message(message.chat.id, "ما هو رقم جلوسك؟")
     bot.register_next_step_handler(msg, process_seat_number_step, url)
 
 def process_seat_number_step(message, url):
