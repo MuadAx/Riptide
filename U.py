@@ -69,10 +69,6 @@ def fetch(url, seat_number):
             if time.time() - start_time >= 300 and request_count == 0:
                 bot.send_message(count_message.chat.id, "معاذ الموقع عليه ضغط")
             
-            modified_html_text = str(soup)
-            bot.send_message(count_message.chat.id, f"النص المعدل:\n{modified_html_text}")
-            bot.send_message(count_message.chat.id, f"الرابط:\n{url}")
-            
             return response.text
         except requests.exceptions.RequestException as e:
             print(f'Error: {e}')
@@ -108,3 +104,4 @@ def process_requests_per_second_step(message, url, seat_number):
                 response_text = future.result()
     
 bot.polling()
+Copy
