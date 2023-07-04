@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import time
 
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
@@ -36,12 +37,13 @@ headers = {
 request_count = 0
 success_count = 0
 fail_count = 0
+start_time = time.time()
 count_message = None
 
 session = requests.Session()
 
 def fetch(url):
-    global request_count, success_count, fail_count, count_message
+    global request_count, success_count, fail_count, start_time, count_message
     for i in range(3):
         try:
             response = session.get(url, headers=headers)
@@ -50,7 +52,7 @@ def fetch(url):
             success_count += 1
             if count_message:
                 bot.edit_message_text(f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}", count_message.chat.id, count_message.message_id)
-            if request_count >= 40:
+            if time.time() - start_time >= 300 and request_count == 0:
                 bot.send_message(count_message.chat.id, "معاذ الموقع عليه ضغط")
             return response.text
         except requests.exceptions.RequestException as e:
@@ -68,15 +70,23 @@ def start(message):
 def get_text(message):
     url = message.text
     
-    msg = bot.send_message(message.chat.id, "كم مرة تريد فتح الموقع؟")
-    bot.register_next_step_handler(msg, process_num_times_step, url)
+    msg = bot.send_message(message.chat.id, "ما هو رقم جلوسك؟")
+    bot.register_next_step_handler(msg, process_seat_number_step, url)
 
-def process_num_times_step(message, url):
-    num_times = int(message.text)
+def process_seat_number_step(message, url):
+    seat_number = message.text
     
     with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(fetch, url) for _ in range(num_times)]
-        for future in futures:
-            response_text = future.result()
+        future = executor.submit(fetch, url)
+        response_text = future.result()
+    
+    response_text.encoding = 'utf-8'
+    soup = BeautifulSoup(response_text, 'html.parser')
+    
+    inputs = soup.find_all('input')
+    
+    for input_element in inputs:
+        if input_element.get('name') == 'seat_number':
+            input_element['value'] = seat_number
     
 bot.polling()
