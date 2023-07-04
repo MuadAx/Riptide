@@ -23,7 +23,7 @@ except ImportError:
     install('requests')
     import requests
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import random
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
@@ -42,18 +42,37 @@ count_message = None
 
 session = requests.Session()
 
-def fetch(url):
+def fetch(url, seat_number):
     global request_count, success_count, fail_count, start_time, count_message
     for i in range(3):
         try:
             response = session.get(url, headers=headers)
             response.raise_for_status()
             request_count += 1
+            
+            response_text = response.text
+            response_text.encoding = 'utf-8'
+            soup = BeautifulSoup(response_text, 'html.parser')
+            
+            inputs = soup.find_all('input')
+            
+            for input_element in inputs:
+                if input_element.get('name') == 'رقم الجلوس':
+                    input_element['value'] = seat_number
+            
             success_count += 1
+            
             if count_message:
-                bot.edit_message_text(f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}", count_message.chat.id, count_message.message_id)
+                elapsed_time = time.time() - start_time
+                requests_per_second = request_count / elapsed_time if elapsed_time > 0 else 0
+                bot.edit_message_text(f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}\nالطلبات في الثانية: {requests_per_second:.2f}", count_message.chat.id, count_message.message_id)
             if time.time() - start_time >= 300 and request_count == 0:
                 bot.send_message(count_message.chat.id, "معاذ الموقع عليه ضغط")
+            
+            modified_html_text = str(soup)
+            bot.send_message(count_message.chat.id, f"النص المعدل:\n{modified_html_text}")
+            bot.send_message(count_message.chat.id, f"الرابط:\n{url}")
+            
             return response.text
         except requests.exceptions.RequestException as e:
             print(f'Error: {e}')
@@ -76,17 +95,16 @@ def get_text(message):
 def process_seat_number_step(message, url):
     seat_number = message.text
     
+    msg = bot.send_message(message.chat.id, "كم طلب في الثانية تريد إجراء؟")
+    bot.register_next_step_handler(msg, process_requests_per_second_step, url, seat_number)
+
+def process_requests_per_second_step(message, url, seat_number):
+    requests_per_second = int(message.text)
+    
     with ThreadPoolExecutor() as executor:
-        future = executor.submit(fetch, url)
-        response_text = future.result()
-    
-    response_text.encoding = 'utf-8'
-    soup = BeautifulSoup(response_text, 'html.parser')
-    
-    inputs = soup.find_all('input')
-    
-    for input_element in inputs:
-        if input_element.get('name') == 'seat_number':
-            input_element['value'] = seat_number
+        while True:
+            futures = [executor.submit(fetch, url, seat_number) for _ in range(requests_per_second)]
+            for future in as_completed(futures):
+                response_text = future.result()
     
 bot.polling()
