@@ -60,6 +60,30 @@ def fetch(url, seat_number):
                 if input_element.get('name') == 'رقم الجلوس':
                     input_element['value'] = seat_number
             
+            view_grades_button = soup.find('input', {'value': 'عرض الدرجات'})
+            if view_grades_button:
+                view_grades_form = view_grades_button.find_parent('form')
+                if view_grades_form:
+                    action_url = view_grades_form.get('action')
+                    method = view_grades_form.get('method', 'get').lower()
+                    data = {}
+                    for input_element in view_grades_form.find_all('input'):
+                        name = input_element.get('name')
+                        value = input_element.get('value')
+                        if name and value:
+                            data[name] = value
+                    
+                    if method == 'post':
+                        response = session.post(action_url, data=data, headers=headers)
+                    else:
+                        response = session.get(action_url, params=data, headers=headers)
+                    
+                    response.raise_for_status()
+                    
+                    response_text = response.text
+                    response_text.encoding = 'utf-8'
+                    soup = BeautifulSoup(response_text, 'html.parser')
+            
             success_count += 1
             
             if count_message:
@@ -69,7 +93,7 @@ def fetch(url, seat_number):
             if time.time() - start_time >= 300 and request_count == 0:
                 bot.send_message(count_message.chat.id, "معاذ الموقع عليه ضغط")
             
-            return response.text
+            return str(soup)
         except requests.exceptions.RequestException as e:
             print(f'Error: {e}')
             fail_count += 1
@@ -79,8 +103,7 @@ def fetch(url, seat_number):
 def start(message):
     global count_message
     bot.send_message(message.chat.id, "مرحبًا! أرسل لي رابط الموقع الذي تريد استخراج النص منه.")
-    count_message = bot.send_message(message.chat.id, f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}")
-
+    count_message = bot.edit_message_text(f"عدد الطلبات: {request_count}\nعدد الطلبات الناجحة: {success_count}\nعدد الطلبات الفاشلة: {fail_count}\nالطلبات في الثانية: {requests_per_second:.2f}", count_message.chat.id, count_message.message_id)
 @bot.message_handler(func=lambda message: True)
 def get_text(message):
     url = message.text
@@ -91,17 +114,9 @@ def get_text(message):
 def process_seat_number_step(message, url):
     seat_number = message.text
     
-    msg = bot.send_message(message.chat.id, "كم طلب في الثانية تريد إجراء؟")
-    bot.register_next_step_handler(msg, process_requests_per_second_step, url, seat_number)
-
-def process_requests_per_second_step(message, url, seat_number):
-    requests_per_second = int(message.text)
-    
-    with ThreadPoolExecutor() as executor:
-        while True:
-            futures = [executor.submit(fetch, url, seat_number) for _ in range(requests_per_second)]
-            for future in as_completed(futures):
-                response_text = future.result()
+    while True:
+        response_text = fetch(url, seat_number)
+        bot.send_message(message.chat.id, response_text)
+        time.sleep(60)
     
 bot.polling()
-Copy
