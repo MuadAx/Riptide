@@ -40,6 +40,7 @@ def get_seats(message):
 def get_grades(chat_id):
     url = user_data[chat_id]['url']
     seat_numbers = user_data[chat_id]['seat_numbers']
+    error_message = None
     for seat_number in seat_numbers:
         success = False
         error_count = 0
@@ -80,6 +81,9 @@ def get_grades(chat_id):
                 bot.send_message(chat_id, soup.get_text())
                 success = True
             except Exception as e:
-                bot.send_message(chat_id, str(e))
+                if error_message:
+                    bot.edit_message_text(str(e), chat_id, error_message.message_id)
+                else:
+                    error_message = bot.send_message(chat_id, str(e))
 
 bot.polling()
