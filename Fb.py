@@ -27,10 +27,13 @@ def handle_message(message):
     data = json.loads(video_url)
 
     # Extract video URL
-    video_url = data['links']['Download High Quality']
+    if 'Download High Quality' in data['links']:
+        video_url = data['links']['Download High Quality']
+    else:
+        video_url = data['links']['Download Low Quality']
 
     # Download video file
-    response = requests.get(video_url, timeout=1030) # Set timeout to 10 seconds
+    response = requests.get(video_url, timeout=1030) # Set timeout to 30 seconds
     video_file = open('video.mp4', 'wb')
     video_file.write(response.content)
     video_file.close()
@@ -38,8 +41,5 @@ def handle_message(message):
     # Send video file
     video = open('video.mp4', 'rb')
     bot.send_document(message.chat.id, video)
-
-    # Print confirmation message
-    print("تم إرسال الفيديو")
 
 bot.polling()
