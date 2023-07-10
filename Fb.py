@@ -1,6 +1,7 @@
 import http.client
 import telebot
 import requests
+import json
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -21,6 +22,12 @@ def handle_message(message):
     res = conn.getresponse()
     data = res.read()
     video_url = data.decode("utf-8")
+
+    # Parse JSON string
+    data = json.loads(video_url)
+
+    # Extract video URL
+    video_url = data['links']['Download High Quality'] # Change this key to the appropriate key for high quality video
 
     # Download video file
     response = requests.get(video_url)
