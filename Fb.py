@@ -1,5 +1,6 @@
-import telebot
 import http.client
+import telebot
+import requests
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -20,6 +21,15 @@ def handle_message(message):
     res = conn.getresponse()
     data = res.read()
     video_url = data.decode("utf-8")
-    bot.send_video(message.chat.id, video_url)
+
+    # Download video file
+    response = requests.get(video_url)
+    video_file = open('video.mp4', 'wb')
+    video_file.write(response.content)
+    video_file.close()
+
+    # Send video file
+    video = open('video.mp4', 'rb')
+    bot.send_document(message.chat.id, video)
 
 bot.polling()
