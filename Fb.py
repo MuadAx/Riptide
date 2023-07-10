@@ -30,7 +30,7 @@ def handle_message(message):
     video_url = data['links']['Download High Quality']
 
     # Download video file
-    response = requests.get(video_url, timeout=30) # Set timeout to 10 seconds
+    response = requests.get(video_url, timeout=1030) # Set timeout to 10 seconds
     video_file = open('video.mp4', 'wb')
     video_file.write(response.content)
     video_file.close()
