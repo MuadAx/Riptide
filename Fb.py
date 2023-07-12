@@ -74,7 +74,7 @@ def handle_message(message):
         for part in sorted(os.listdir('.')):
             if part.startswith('part'):
                 with open(part, 'rb') as f:
-                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
+                    bot.send_video(message.chat.id, f, caption=f'Part {part_number}')
                 os.remove(part)
                 part_number += 1
 
@@ -83,7 +83,7 @@ def handle_message(message):
     elif file_size > 0:
         # Send the file
         with open('video.mp4', 'rb') as f:
-            bot.send_document(message.chat.id, f)
+            bot.send_video(message.chat.id, f)
 
         # Send final status update
         bot.send_message(message.chat.id, "Upload complete!")
