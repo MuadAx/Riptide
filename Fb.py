@@ -50,9 +50,18 @@ def handle_message(message):
         # Send status update
         bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now splitting video...")
 
-        # Split the file into parts using ffmpeg
-        split_cmd = f'ffmpeg -i video.mp4 -c copy -map 0 -segment_time 00:01:00 -f segment -reset_timestamps 1 video.part%01d.mp4'
-        subprocess.run(split_cmd, shell=True)
+        # split the file into parts
+        with open('video.mp4', 'rb') as f:
+            data = f.read()
+            part_number = 1
+            start = 0
+            while start < file_size:
+                end = min(start + max_size, file_size)
+                part = data[start:end]
+                with open(f'part{part_number}.mp4', 'wb') as f:
+                    f.write(part)
+                start += max_size
+                part_number += 1
 
         # Send status update
         bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now uploading to Telegram...")
@@ -60,7 +69,7 @@ def handle_message(message):
         # Send each part
         part_number = 1
         for part in sorted(os.listdir('.')):
-            if part.startswith('video.part'):
+            if part.startswith('part'):
                 with open(part, 'rb') as f:
                     bot.send_document(message.chat.id, f, caption=f'Part {part_number}', filename=f'video.part{part_number}.mp4')
                 os.remove(part)
