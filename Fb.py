@@ -9,7 +9,7 @@ bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    bot.send_message(message.chat.id, "مرحبا! يرجى إرسال رابط الفيديو الذي ترغب في تنزيله.")
+    bot.send_message(message.chat.id, "Hello! Please send the Facebook video URL you want to download.")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
@@ -35,27 +35,27 @@ def handle_message(message):
 
     # Download video file
     response = requests.get(video_url, timeout=1030) # Set timeout to 30 seconds
-video_file = open('video.mp4', 'wb')
-video_file.write(response.content)
-video_file.close()
+    video_file = open('video.mp4', 'wb')
+    video_file.write(response.content)
+    video_file.close()
 
-# Check file size
-file_size = os.path.getsize('video.mp4')
-max_size = 50 * 1024 * 1024  # 50 MB
-if file_size > max_size:
-    # Split the file into parts
-    os.popen(f'split -b {max_size} video.mp4 video.part.')
-    # Send each part
-    part_number = 1
-    for part in sorted(os.listdir('.')):
-        if part.startswith('video.part.'):
-            with open(part, 'rb') as f:
-                bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
-            os.remove(part)
-            part_number += 1
-else:
-    # Send the file
-    with open('video.mp4', 'rb') as f:
-        bot.send_document(message.chat.id, f)
+    # Check file size
+    file_size = os.path.getsize('video.mp4')
+    max_size = 50 * 1024 * 1024  # 50 MB
+    if file_size > max_size:
+        # Split the file into parts
+        os.popen(f'split -b {max_size} video.mp4 video.part.')
+        # Send each part
+        part_number = 1
+        for part in sorted(os.listdir('.')):
+            if part.startswith('video.part.'):
+                with open(part, 'rb') as f:
+                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
+                os.remove(part)
+                part_number += 1
+    else:
+        # Send the file
+        with open('video.mp4', 'rb') as f:
+            bot.send_document(message.chat.id, f)
 
 bot.polling()
