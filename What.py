@@ -1,31 +1,48 @@
 import os
-from telebot import TeleBot
+import math
+import telebot
+from moviepy.video.io.VideoFileClip import VideoFileClip
 
-bot = TeleBot('5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw')
-chat_id = '1750552824'
-file_path = 'video.mp4'
-max_size = 50 * 1024 * 1024 # 50 MB
+TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+bot = telebot.TeleBot(TOKEN)
+chat_id = 'YOUR_CHAT_ID'
 
-file_size = os.path.getsize(file_path)
-if file_size > max_size:
-    # split the file into two parts
-    with open(file_path, 'rb') as f:
-        data = f.read()
-        part1 = data[:file_size//2]
-        part2 = data[file_size//2:]
-    
-    # save the parts to separate files
-    with open('part1.mp4', 'wb') as f:
-        f.write(part1)
-    with open('part2.mp4', 'wb') as f:
-        f.write(part2)
-    
-    # send the parts using telebot
-    with open('part1.mp4', 'rb') as f:
-        bot.send_video(chat_id, f)
-    with open('part2.mp4', 'rb') as f:
-        bot.send_video(chat_id, f)
-else:
-    # send the file as is
-    with open(file_path, 'rb') as f:
-        bot.send_video(chat_id, f)
+def send_video_info(filename):
+    clip = VideoFileClip(filename)
+    duration = clip.duration
+    size = os.path.getsize(filename) / (1024 * 1024)
+    bot.send_message(chat_id, f'طول الفيديو: {duration} ثانية')
+    bot.send_message(chat_id, f'مساحة الفيديو: {size:.2f} ميجابايت')
+
+def trim_video(filename, start_time, end_time):
+    clip = VideoFileClip(filename)
+    trimmed_clip = clip.subclip(start_time, end_time)
+    trimmed_filename = f'trimmed_{start_time}_{end_time}_{filename}'
+    trimmed_clip.write_videofile(trimmed_filename)
+    return trimmed_filename
+
+def split_video(filename, split_duration):
+    clip = VideoFileClip(filename)
+    duration = clip.duration
+    split_count = math.ceil(duration / split_duration)
+    trimmed_filenames = []
+    for i in range(split_count):
+        start_time = i * split_duration
+        end_time = min((i + 1) * split_duration, duration)
+        trimmed_filename = trim_video(filename, start_time, end_time)
+        trimmed_filenames.append(trimmed_filename)
+    return trimmed_filenames
+
+def send_and_delete_videos(videos):
+    for video_filename in videos:
+        video = open(video_filename, 'rb')
+        bot.send_video(chat_id, video)
+        os.remove(video_filename)
+
+send_video_info('video.mp4')
+split_duration = 30 * 60
+trimmed_filenames = split_video('video.mp4', split_duration)
+
+send_choice = input('هل تريد إرسال الفيديوهات المقصوصة وحذفها بعد الإرسال؟ (y/n) ')
+if send_choice.lower() == 'y':
+    send_and_delete_videos(trimmed_filenames)
