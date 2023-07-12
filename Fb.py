@@ -50,12 +50,14 @@ def handle_message(message):
         for part in sorted(os.listdir('.')):
             if part.startswith('video.part.'):
                 with open(part, 'rb') as f:
-                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
+                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}.mp4')
                 os.remove(part)
                 part_number += 1
-    else:
+    elif file_size > 0:
         # Send the file
         with open('video.mp4', 'rb') as f:
             bot.send_document(message.chat.id, f)
+    else:
+        bot.send_message(message.chat.id, "The downloaded file is empty. Please check the URL and try again.")
 
 bot.polling()
