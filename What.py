@@ -3,9 +3,9 @@ import math
 import telebot
 from moviepy.video.io.VideoFileClip import VideoFileClip
 
-TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
-chat_id = 'YOUR_CHAT_ID'
+chat_id = '1750552824'
 
 def send_video_info(filename):
     clip = VideoFileClip(filename)
