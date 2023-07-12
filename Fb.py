@@ -51,23 +51,25 @@ def handle_message(message):
     video_file.close()
 
 
-    # Generate thumbnail image
-    subprocess.call('ffmpeg -i video.mp4 -ss 00:00:01.000 -vframes 1 thumbnail.jpg -y', shell=True)
-
-
-    # Send thumbnail image
-    with open('thumbnail.jpg', 'rb') as f:
-        bot.send_photo(message.chat.id, f)
-
-
     # Send file size
     file_size = os.path.getsize('video.mp4')
     bot.send_message(message.chat.id, f"The downloaded file size is {file_size / (1024 * 1024):.2f} MB.")
 
 
-    # Send the file as a document
+    # Check file size
+    max_size = 50 * 1024 * 1024  # 50 MB
+    if file_size > max_size:
+        # Re-encode the video using a lower bitrate
+        subprocess.call('ffmpeg -i video.mp4 -b:v 1M -c:a copy output.mp4 -y', shell=True)
+        os.rename('output.mp4', 'video.mp4')
+
+        # Send status update
+        bot.send_message(message.chat.id, "The video file has been re-encoded to reduce its size.")
+
+
+    # Send the file as a video
     with open('video.mp4', 'rb') as f:
-        bot.send_document(message.chat.id, f)
+        bot.send_video(message.chat.id, f)
 
 
     # Send final status update
