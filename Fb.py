@@ -3,6 +3,7 @@ import telebot
 import requests
 import json
 import os
+import subprocess
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -49,8 +50,9 @@ def handle_message(message):
         # Send status update
         bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now splitting video...")
 
-        # Split the file into parts using a video editing tool
-        # ...
+        # Split the file into parts using ffmpeg
+        split_cmd = f'ffmpeg -i video.mp4 -c copy -map 0 -segment_time 00:01:00 -f segment -reset_timestamps 1 video.part%01d.mp4'
+        subprocess.run(split_cmd, shell=True)
 
         # Send status update
         bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now uploading to Telegram...")
