@@ -71,7 +71,7 @@ def handle_message(message):
         for part in sorted(os.listdir('.')):
             if part.startswith('part'):
                 with open(part, 'rb') as f:
-                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}', filename=f'video.part{part_number}.mp4')
+                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
                 os.remove(part)
                 part_number += 1
 
