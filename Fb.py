@@ -59,23 +59,45 @@ def handle_message(message):
     # Check file size
     max_size = 50 * 1024 * 1024  # 50 MB
     if file_size > max_size:
-        # Re-encode the video using a lower bitrate
-        subprocess.call('ffmpeg -i video.mp4 -b:v 1M -c:a copy output.mp4 -y', shell=True)
-        os.rename('output.mp4', 'video.mp4')
+        # Calculate the number of parts
+        parts = (file_size + max_size - 1) // max_size
+
+
+        # Split the file into parts using ffmpeg
+        duration = float(subprocess.check_output(f'ffprobe -i video.mp4 -show_entries format=duration -v quiet -of csv="p=0"', shell=True))
+        part_duration = duration / parts
+        for part_number in range(parts):
+            start = part_number * part_duration
+            end = start + part_duration
+            subprocess.call(f'ffmpeg -ss {start} -i video.mp4 -t {part_duration} -c copy part{part_number + 1}.mp4 -y', shell=True)
+
 
         # Send status update
-        bot.send_message(message.chat.id, "The video file has been re-encoded to reduce its size.")
+        bot.send_message(message.chat.id, "Now uploading to Telegram...")
 
 
-    # Send the file as a video
-    with open('video.mp4', 'rb') as f:
-        bot.send_video(message.chat.id, f)
+        # Send each part
+        part_number = 1
+        for part in sorted(os.listdir('.')):
+            if part.startswith('part'):
+                with open(part, 'rb') as f:
+                    bot.send_video(message.chat.id, f, caption=f'Part {part_number}')
+                os.remove(part)
+                part_number += 1
 
 
-    # Send final status update
-    bot.send_message(message.chat.id, "Upload complete!")
+        # Send final status update
+        bot.send_message(message.chat.id, "Upload complete!")
+    elif file_size > 0:
+        # Send the file
+        with open('video.mp4', 'rb') as f:
+            bot.send_video(message.chat.id, f)
 
 
-bot.enable_save_next_step_handlers(delay=2)
-bot.load_next_step_handlers()
-bot.polling(none_stop=True, interval=0, timeout=20)
+        # Send final status update
+        bot.send_message(message.chat.id, "Upload complete!")
+    else:
+        bot.send_message(message.chat.id, "The downloaded file is empty. Please check the URL and try again.")
+
+
+bot.polling()
