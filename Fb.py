@@ -76,4 +76,6 @@ def handle_message(message):
     bot.send_message(message.chat.id, "Upload complete!")
 
 
-bot.polling()
+bot.enable_save_next_step_handlers(delay=2)
+bot.load_next_step_handlers()
+bot.polling(none_stop=True, interval=0, timeout=20)
