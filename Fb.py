@@ -3,7 +3,6 @@ import telebot
 import requests
 import json
 import os
-import subprocess
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -43,48 +42,44 @@ def handle_message(message):
     video_file.write(response.content)
     video_file.close()
 
-    # Check file size
+    # Send file size
     file_size = os.path.getsize('video.mp4')
-    max_size = 50 * 1024 * 1024  # 50 MB
-    if file_size > max_size:
-        # Send status update
-        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now splitting video...")
+    bot.send_message(message.chat.id, f"The downloaded file size is {file_size / (1024 * 1024):.2f} MB.")
 
-        # split the file into parts
-        with open('video.mp4', 'rb') as f:
-            data = f.read()
-            part_number = 1
-            start = 0
-            while start < file_size:
-                end = min(start + max_size, file_size)
-                part = data[start:end]
-                with open(f'part{part_number}.mp4', 'wb') as f:
-                    f.write(part)
-                start += max_size
-                part_number += 1
+@bot.message_handler(commands=['split'])
+def handle_split(message):
+    parts = int(message.text.split()[1])
+    if parts < 1:
+        bot.send_message(message.chat.id, "Invalid number of parts. Please enter a positive integer.")
+        return
 
-        # Send status update
-        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now uploading to Telegram...")
-
-        # Send each part
+    # Split the file into parts
+    with open('video.mp4', 'rb') as f:
+        data = f.read()
+        part_size = len(data) // parts
         part_number = 1
-        for part in sorted(os.listdir('.')):
-            if part.startswith('part'):
-                with open(part, 'rb') as f:
-                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
-                os.remove(part)
-                part_number += 1
+        start = 0
+        while start < len(data):
+            end = min(start + part_size, len(data))
+            part = data[start:end]
+            with open(f'part{part_number}.mp4', 'wb') as f:
+                f.write(part)
+            start += part_size
+            part_number += 1
 
-        # Send final status update
-        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Upload complete!")
-    elif file_size > 0:
-        # Send the file
-        with open('video.mp4', 'rb') as f:
-            bot.send_document(message.chat.id, f)
+    # Send status update
+    bot.send_message(message.chat.id, "Now uploading to Telegram...")
 
-        # Send final status update
-        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Upload complete!")
-    else:
-        bot.send_message(message.chat.id, "The downloaded file is empty. Please check the URL and try again.")
+    # Send each part
+    part_number = 1
+    for part in sorted(os.listdir('.')):
+        if part.startswith('part'):
+            with open(part, 'rb') as f:
+                bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
+            os.remove(part)
+            part_number += 1
+
+    # Send final status update
+    bot.send_message(message.chat.id, "Upload complete!")
 
 bot.polling()
