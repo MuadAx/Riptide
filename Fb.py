@@ -3,6 +3,7 @@ import telebot
 import requests
 import json
 import os
+import cv2
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -52,6 +53,11 @@ def handle_message(message):
         # Calculate the number of parts
         parts = (file_size + max_size - 1) // max_size
 
+        # Extract thumbnail from the original video
+        cap = cv2.VideoCapture('video.mp4')
+        ret, frame = cap.read()
+        cv2.imwrite('thumbnail.jpg', frame)
+
         # Split the file into parts
         with open('video.mp4', 'rb') as f:
             data = f.read()
@@ -74,16 +80,21 @@ def handle_message(message):
         for part in sorted(os.listdir('.')):
             if part.startswith('part'):
                 with open(part, 'rb') as f:
-                    bot.send_video(message.chat.id, f, caption=f'Part {part_number}')
+                    bot.send_video(message.chat.id, f, thumb='thumbnail.jpg', caption=f'Part {part_number}')
                 os.remove(part)
                 part_number += 1
 
         # Send final status update
         bot.send_message(message.chat.id, "Upload complete!")
     elif file_size > 0:
+        # Extract thumbnail from the original video
+        cap = cv2.VideoCapture('video.mp4')
+        ret, frame = cap.read()
+        cv2.imwrite('thumbnail.jpg', frame)
+
         # Send the file
         with open('video.mp4', 'rb') as f:
-            bot.send_video(message.chat.id, f)
+            bot.send_video(message.chat.id, f, thumb='thumbnail.jpg')
 
         # Send final status update
         bot.send_message(message.chat.id, "Upload complete!")
