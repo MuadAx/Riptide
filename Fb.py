@@ -5,7 +5,7 @@ import subprocess
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-required_packages = ['telebot', 'imageio', 'http.client', 'requests', 'json', 'os']
+required_packages = ['telebot', 'imageio', 'http.client', 'requests', 'json', 'os', 'Pillow']
 
 for package in required_packages:
     try:
@@ -19,6 +19,7 @@ import requests
 import json
 import os
 import imageio
+from PIL import Image
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -71,7 +72,9 @@ def handle_message(message):
         # Extract thumbnail from the original video
         reader = imageio.get_reader('video.mp4')
         frame = reader.get_data(0)
-        imageio.imwrite('thumbnail.jpg', frame)
+        image = Image.fromarray(frame)
+        image = image.convert('RGB')
+        image.save('thumbnail.jpg')
 
         # Split the file into parts
         with open('video.mp4', 'rb') as f:
@@ -84,14 +87,14 @@ def handle_message(message):
                 part = data[start:end]
                 with open(f'part{part_number}.mp4', 'wb') as f:
                     f.write(part)
-                start += part_size
+                start += part_size;
                 part_number += 1
 
         # Send status update
         bot.send_message(message.chat.id, "Now uploading to Telegram...")
 
         # Send each part
-        part_number = 1
+        part_number = 1;
         for part in sorted(os.listdir('.')):
             if part.startswith('part'):
                 with open(part, 'rb') as f:
@@ -105,7 +108,9 @@ def handle_message(message):
         # Extract thumbnail from the original video
         reader = imageio.get_reader('video.mp4')
         frame = reader.get_data(0)
-        imageio.imwrite('thumbnail.jpg', frame)
+        image = Image.fromarray(frame)
+        image = image.convert('RGB')
+        image.save('thumbnail.jpg')
 
         # Send the file
         with open('video.mp4', 'rb') as f:
