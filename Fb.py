@@ -1,25 +1,8 @@
-import os
-import sys
-import subprocess
-
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-
-required_packages = ['telebot', 'imageio', 'http.client', 'requests', 'json', 'os', 'Pillow']
-
-for package in required_packages:
-    try:
-        __import__(package)
-    except ImportError:
-        install(package)
-
 import http.client
 import telebot
 import requests
 import json
 import os
-import imageio
-from PIL import Image
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -69,13 +52,6 @@ def handle_message(message):
         # Calculate the number of parts
         parts = (file_size + max_size - 1) // max_size
 
-        # Extract thumbnail from the original video
-        reader = imageio.get_reader('video.mp4')
-        frame = reader.get_data(0)
-        image = Image.fromarray(frame)
-        image = image.convert('RGB')
-        image.save('thumbnail.jpg')
-
         # Split the file into parts
         with open('video.mp4', 'rb') as f:
             data = f.read()
@@ -87,34 +63,27 @@ def handle_message(message):
                 part = data[start:end]
                 with open(f'part{part_number}.mp4', 'wb') as f:
                     f.write(part)
-                start += part_size;
+                start += part_size
                 part_number += 1
 
         # Send status update
         bot.send_message(message.chat.id, "Now uploading to Telegram...")
 
         # Send each part
-        part_number = 1;
+        part_number = 1
         for part in sorted(os.listdir('.')):
             if part.startswith('part'):
                 with open(part, 'rb') as f:
-                    bot.send_video(message.chat.id, f, thumb='thumbnail.jpg', caption=f'Part {part_number}')
+                    bot.send_video(message.chat.id, f, caption=f'Part {part_number}')
                 os.remove(part)
                 part_number += 1
 
         # Send final status update
         bot.send_message(message.chat.id, "Upload complete!")
     elif file_size > 0:
-        # Extract thumbnail from the original video
-        reader = imageio.get_reader('video.mp4')
-        frame = reader.get_data(0)
-        image = Image.fromarray(frame)
-        image = image.convert('RGB')
-        image.save('thumbnail.jpg')
-
         # Send the file
         with open('video.mp4', 'rb') as f:
-            bot.send_video(message.chat.id, f, thumb='thumbnail.jpg')
+            bot.send_video(message.chat.id, f)
 
         # Send final status update
         bot.send_message(message.chat.id, "Upload complete!")
