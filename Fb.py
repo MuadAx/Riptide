@@ -5,7 +5,7 @@ import subprocess
 def install(package):
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-required_packages = ['telebot', 'opencv-python', 'http.client', 'requests', 'json', 'os']
+required_packages = ['telebot', 'imageio', 'http.client', 'requests', 'json', 'os']
 
 for package in required_packages:
     try:
@@ -18,7 +18,7 @@ import telebot
 import requests
 import json
 import os
-import cv2
+import imageio
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -69,9 +69,9 @@ def handle_message(message):
         parts = (file_size + max_size - 1) // max_size
 
         # Extract thumbnail from the original video
-        cap = cv2.VideoCapture('video.mp4')
-        ret, frame = cap.read()
-        cv2.imwrite('thumbnail.jpg', frame)
+        reader = imageio.get_reader('video.mp4')
+        frame = reader.get_data(0)
+        imageio.imwrite('thumbnail.jpg', frame)
 
         # Split the file into parts
         with open('video.mp4', 'rb') as f:
@@ -103,9 +103,9 @@ def handle_message(message):
         bot.send_message(message.chat.id, "Upload complete!")
     elif file_size > 0:
         # Extract thumbnail from the original video
-        cap = cv2.VideoCapture('video.mp4')
-        ret, frame = cap.read()
-        cv2.imwrite('thumbnail.jpg', frame)
+        reader = imageio.get_reader('video.mp4')
+        frame = reader.get_data(0)
+        imageio.imwrite('thumbnail.jpg', frame)
 
         # Send the file
         with open('video.mp4', 'rb') as f:
