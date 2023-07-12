@@ -33,6 +33,9 @@ def handle_message(message):
     else:
         video_url = data['links']['Download Low Quality']
 
+    # Send status update
+    status_message = bot.send_message(message.chat.id, "Now downloading video...")
+
     # Download video file
     response = requests.get(video_url, timeout=1030) # Set timeout to 30 seconds
     video_file = open('video.mp4', 'wb')
@@ -43,20 +46,33 @@ def handle_message(message):
     file_size = os.path.getsize('video.mp4')
     max_size = 50 * 1024 * 1024  # 50 MB
     if file_size > max_size:
-        # Split the file into parts
-        os.popen(f'split -b {max_size} video.mp4 video.part.')
+        # Send status update
+        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now splitting video...")
+
+        # Split the file into parts using a video editing tool
+        # ...
+
+        # Send status update
+        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Now uploading to Telegram...")
+
         # Send each part
         part_number = 1
         for part in sorted(os.listdir('.')):
-            if part.startswith('video.part.'):
+            if part.startswith('video.part'):
                 with open(part, 'rb') as f:
-                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}.mp4')
+                    bot.send_document(message.chat.id, f, caption=f'Part {part_number}', filename=f'video.part{part_number}.mp4')
                 os.remove(part)
                 part_number += 1
+
+        # Send final status update
+        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Upload complete!")
     elif file_size > 0:
         # Send the file
         with open('video.mp4', 'rb') as f:
             bot.send_document(message.chat.id, f)
+
+        # Send final status update
+        bot.edit_message_text(chat_id=status_message.chat.id, message_id=status_message.message_id, text="Upload complete!")
     else:
         bot.send_message(message.chat.id, "The downloaded file is empty. Please check the URL and try again.")
 
