@@ -2,6 +2,8 @@ import http.client
 import telebot
 import requests
 import json
+import os
+from moviepy.editor import VideoFileClip
 
 TOKEN = '5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw'
 bot = telebot.TeleBot(TOKEN)
@@ -38,8 +40,15 @@ def handle_message(message):
     video_file.write(response.content)
     video_file.close()
 
-    # Send video file
-    video = open('video.mp4', 'rb')
-    bot.send_video(message.chat.id, video)
+    # Get file size
+    file_size = os.path.getsize('video.mp4')
+    file_size = round(file_size / (1024 * 1024), 2)
+
+    # Get video duration
+    clip = VideoFileClip('video.mp4')
+    duration = round(clip.duration / 60, 2)
+
+    # Send video info
+    bot.send_message(message.chat.id, f'حجم الملف: {file_size} ميغابايت\nمدة الفيديو: {duration} دقيقة')
 
 bot.polling()
