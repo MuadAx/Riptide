@@ -1,3 +1,18 @@
+import os
+import sys
+import subprocess
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+required_packages = ['telebot', 'cv2', 'http.client', 'requests', 'json', 'os']
+
+for package in required_packages:
+    try:
+        __import__(package)
+    except ImportError:
+        install(package)
+
 import http.client
 import telebot
 import requests
