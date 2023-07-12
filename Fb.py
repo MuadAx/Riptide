@@ -33,13 +33,13 @@ def handle_message(message):
         video_url = data['links']['Download Low Quality']
 
     # Download video file
-    response = requests.get(video_url, timeout=1030) # Set timeout to 30 seconds
+    response = requests.get(video_url, timeout=30) # Set timeout to 30 seconds
     video_file = open('video.mp4', 'wb')
     video_file.write(response.content)
     video_file.close()
 
     # Send video file
     video = open('video.mp4', 'rb')
-    bot.send_document(message.chat.id, video)
+    bot.send_video(message.chat.id, video)
 
 bot.polling()
