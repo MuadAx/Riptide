@@ -1,22 +1,31 @@
-import telebot
 import os
+from telebot import TeleBot
 
-bot = telebot.TeleBot('5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw')
+bot = TeleBot('5566197914:AAHIoqN-wclAi8BU6vAnR_b5HQP07yPNKMw')
+chat_id = '1750552824'
+file_path = 'video.mp4'
+max_size = 50 * 1024 * 1024 # 50 MB
 
-@bot.message_handler(content_types=['video'])
-def handle_video(message):
-    file_info = bot.get_file(message.video.file_id)
-    downloaded_file = bot.download_file(file_info.file_path)
-
-    file_name, file_ext = os.path.splitext(file_info.file_path)
-    with open(f'video{file_ext}', 'wb') as new_file:
-        new_file.write(downloaded_file)
-
-    size = os.path.getsize(f'video{file_ext}')
-    size = round(size / (1024 * 1024), 2)
-    bot.reply_to(message, f'صيغة الفيديو: {file_ext[1:]}\nمساحة الفيديو: {size} ميجابايت')
-
-    video = open('video.mp4', 'rb')
-    bot.send_video(message.chat.id, video)
-
-bot.polling()
+file_size = os.path.getsize(file_path)
+if file_size > max_size:
+    # split the file into two parts
+    with open(file_path, 'rb') as f:
+        data = f.read()
+        part1 = data[:file_size//2]
+        part2 = data[file_size//2:]
+    
+    # save the parts to separate files
+    with open('part1.mp4', 'wb') as f:
+        f.write(part1)
+    with open('part2.mp4', 'wb') as f:
+        f.write(part2)
+    
+    # send the parts using telebot
+    with open('part1.mp4', 'rb') as f:
+        bot.send_video(chat_id, f)
+    with open('part2.mp4', 'rb') as f:
+        bot.send_video(chat_id, f)
+else:
+    # send the file as is
+    with open(file_path, 'rb') as f:
+        bot.send_video(chat_id, f)
