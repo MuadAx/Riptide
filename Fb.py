@@ -34,16 +34,28 @@ def handle_message(message):
         video_url = data['links']['Download Low Quality']
 
     # Download video file
-    response = requests.get(video_url, timeout=1300) # Set timeout to 30 seconds
-    video_file = open('video.mp4', 'wb')
-    video_file.write(response.content)
-    video_file.close()
+    response = requests.get(video_url, timeout=1030) # Set timeout to 30 seconds
+video_file = open('video.mp4', 'wb')
+video_file.write(response.content)
+video_file.close()
 
-    # Get file size
-    file_size = os.path.getsize('video.mp4')
-    file_size = round(file_size / (1024 * 1024), 2)
-
-    # Send file size
-    bot.send_message(message.chat.id, f'حجم الملف: {file_size} ميغابايت')
+# Check file size
+file_size = os.path.getsize('video.mp4')
+max_size = 50 * 1024 * 1024  # 50 MB
+if file_size > max_size:
+    # Split the file into parts
+    os.popen(f'split -b {max_size} video.mp4 video.part.')
+    # Send each part
+    part_number = 1
+    for part in sorted(os.listdir('.')):
+        if part.startswith('video.part.'):
+            with open(part, 'rb') as f:
+                bot.send_document(message.chat.id, f, caption=f'Part {part_number}')
+            os.remove(part)
+            part_number += 1
+else:
+    # Send the file
+    with open('video.mp4', 'rb') as f:
+        bot.send_document(message.chat.id, f)
 
 bot.polling()
