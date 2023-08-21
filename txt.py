@@ -1,5 +1,5 @@
 # import the libraries
-import fitz
+import pdftotext
 import telebot
 
 # create a bot object using your token
@@ -12,10 +12,10 @@ def handle_document (message):
     file_info = bot.get_file (message.document.file_id)
     downloaded_file = bot.download_file (file_info.file_path)
     # convert it to text
-    pdf_file = fitz.open (stream=downloaded_file, filetype='pdf')
+    pdf = pdftotext.PDF (downloaded_file)
     text = ""
-    for page in pdf_file:
-        text += page.getText ()
+    for page in pdf:
+        text += page
     # send the text back
     bot.send_message (message.chat.id, text)
 
